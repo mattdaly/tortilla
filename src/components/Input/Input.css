@@ -1,0 +1,7 @@
+input {
+    @apply border-2 border-gray-300 rounded h-7 px-2;
+}
+
+input[aria-invalid] {
+    @apply border-red-500;
+}
