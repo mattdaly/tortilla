@@ -8,13 +8,13 @@ const ListboxContext = React.createContext<any>({});
 
 type ListboxValue = string | number | null;
 
-type ListboxOptionProps = {
+type ListboxOptionProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'value'> & {
     children: string | JSX.Element;
     value: ListboxValue;
 };
 
 const Option = React.forwardRef<HTMLDivElement, ListboxOptionProps>(function Option(externalProps, externalRef) {
-    let { value, ...props } = externalProps;
+    let { onClick, value, ...props } = externalProps;
     let context = React.useContext(ListboxContext);
     let ref = useMergedRef<HTMLDivElement>(externalRef);
     let isActive = value === context.active;
@@ -22,29 +22,33 @@ const Option = React.forwardRef<HTMLDivElement, ListboxOptionProps>(function Opt
 
     React.useEffect(() => {
         if (isSelected) {
-            ref.current?.scrollIntoView();
+            ref.current?.scrollIntoView({ block: 'nearest' });
         }
     }, []);
 
     React.useEffect(() => {
         if (isActive) {
-            ref.current?.scrollIntoView({ block: 'center' });
+            ref.current?.scrollIntoView({ block: 'nearest' });
         }
     }, [isActive]);
 
-    return (
-        <div
-            {...props}
-            role="option"
-            aria-current={isActive}
-            aria-selected={isSelected}
-            onClick={() => context.setValue(value)}
-            ref={ref}
-        />
-    );
+    let handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        context.setValue(value);
+
+        if (onClick) {
+            onClick(event);
+        }
+    };
+
+    return <div {...props} role="option" aria-current={isActive} aria-selected={isSelected} onClick={handleClick} ref={ref} />;
 });
 
-const useActiveOption = (children: JSX.Element[], value: ListboxValue | undefined) => {
+const useActiveOption = (
+    children: JSX.Element[],
+    setValue: (value: ListboxValue) => void,
+    value: ListboxValue | undefined,
+    changeOnActive: boolean
+) => {
     let values = React.useMemo(
         () => React.Children.map(children, (child: React.ReactElement<ListboxOptionProps>) => child.props.value),
         [children]
@@ -54,28 +58,42 @@ const useActiveOption = (children: JSX.Element[], value: ListboxValue | undefine
         value !== undefined ? values.findIndex((v) => v === value) : undefined
     );
 
+    React.useEffect(() => {
+        if (activeIndex === undefined || values[activeIndex] !== value) {
+            setActiveIndex(values.findIndex((v) => v === value));
+        }
+    }, [value]);
+
+    let set = (index: number) => {
+        setActiveIndex(index);
+
+        if (changeOnActive) {
+            setValue(values[index]);
+        }
+    };
+
     let handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
         if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'End' || event.key === 'Home') {
             event.preventDefault();
 
             if (event.key === 'ArrowDown') {
                 if (activeIndex === undefined) {
-                    setActiveIndex(0);
+                    set(0);
                 } else if (activeIndex < values.length - 1) {
-                    setActiveIndex(activeIndex + 1);
+                    set(activeIndex + 1);
                 }
             } else if (event.key === 'ArrowUp') {
                 event.preventDefault();
 
                 if (activeIndex === undefined) {
-                    setActiveIndex(values.length - 1);
+                    set(values.length - 1);
                 } else if (activeIndex > 0) {
-                    setActiveIndex(activeIndex - 1);
+                    set(activeIndex - 1);
                 }
             } else if (event.key === 'End') {
-                setActiveIndex(values.length - 1);
+                set(values.length - 1);
             } else if (event.key === 'Home') {
-                setActiveIndex(0);
+                set(0);
             }
         }
     };
@@ -86,8 +104,9 @@ const useActiveOption = (children: JSX.Element[], value: ListboxValue | undefine
     };
 };
 
-type ListboxProps = {
+type ListboxProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'defaultValue' | 'children' | 'name' | 'onChange' | 'value'> & {
     defaultValue?: ListboxValue;
+    changeOnActive?: boolean;
     children: JSX.Element[];
     name?: string;
     onChange?: (value: ListboxValue) => void;
@@ -95,7 +114,15 @@ type ListboxProps = {
 };
 
 const Root = React.forwardRef<HTMLDivElement, ListboxProps>(function Listbox(externalProps, externalRef) {
-    let { defaultValue: defaultProp, name, onChange, value: prop, ...props } = externalProps;
+    let {
+        changeOnActive = false,
+        defaultValue: defaultProp,
+        name,
+        onChange,
+        tabIndex = 0,
+        value: prop,
+        ...props
+    } = externalProps;
     let [value, setValue] = useControllableState<ListboxValue>({
         prop,
         defaultProp,
@@ -103,7 +130,7 @@ const Root = React.forwardRef<HTMLDivElement, ListboxProps>(function Listbox(ext
     });
 
     // active state
-    let { active, handleKeyDown: handleActiveKeyDown } = useActiveOption(props.children, value);
+    let { active, handleKeyDown: handleActiveKeyDown } = useActiveOption(props.children, setValue, value, changeOnActive);
     let handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
         // selection of active option - alt+up is a strange shortcut but it's listed on WAI-ARIA patterns
         if (event.key === 'Enter' || event.key === ' ' || event.key === 'Tab' || (event.altKey && event.key === 'ArrowUp')) {
@@ -132,8 +159,8 @@ const Root = React.forwardRef<HTMLDivElement, ListboxProps>(function Listbox(ext
 
     return (
         <ListboxContext.Provider value={context}>
-            <div {...props} onKeyDown={handleKeyDown} ref={ref} role="listbox" tabIndex={0} />
-            {isFormControl && <BubbleInput name={name} value={String(value)} />}
+            <div {...props} onKeyDown={handleKeyDown} ref={ref} role="listbox" tabIndex={tabIndex} />
+            {isFormControl && <BubbleInput name={name} type="hidden" value={String(value)} />}
         </ListboxContext.Provider>
     );
 });

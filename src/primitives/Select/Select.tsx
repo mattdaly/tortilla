@@ -1,9 +1,11 @@
-import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import React from 'react';
+import { useControllableState } from '@radix-ui/react-use-controllable-state';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { useIsFormControl } from '../../hooks/useIsFormControl';
 import { useMergedRef } from '../../hooks/useMergedRef';
 import * as ListboxPrimitive from '../../primitives/Listbox/Listbox';
 import { BubbleInput } from '../BubbleInput';
+import { createKeyboardEvent } from '../../utilities/createKeyboardEvent';
 
 type SelectValue = ListboxPrimitive.ListboxValue;
 
@@ -29,56 +31,115 @@ const Value = (props: SelectValueProps) => {
 
 type SelectTriggerProps = React.HTMLAttributes<HTMLDivElement>;
 
-const Trigger = React.forwardRef<HTMLDivElement, SelectTriggerProps>((props, externalRef) => {
+const Trigger = React.forwardRef<HTMLDivElement, SelectTriggerProps>((externalProps, externalRef) => {
+    let { tabIndex = 0, ...props } = externalProps;
     let context = React.useContext(SelectContext);
     // uncontrolled support
     let ref = useMergedRef<HTMLDivElement>(externalRef);
     let isFormControl = useIsFormControl(ref);
 
+    let handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (context.open && context.contentRef?.current) {
+            context.contentRef.current.dispatchEvent(createKeyboardEvent(event));
+        }
+
+        if (!event.isDefaultPrevented()) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                context.setOpen(!context.open);
+            } else if (!context.open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+                context.setOpen(true);
+            } else if (context.open && event.key === 'Escape') {
+                context.setOpen(false);
+            }
+        }
+    };
+
     return (
         <>
-            <div {...props} ref={ref} role="combobox" />
-            {isFormControl && <BubbleInput name={context.name} value={String(context.value)} />}
+            <PopoverPrimitive.Trigger asChild aria-haspopup="listbox" type={undefined}>
+                <div {...props} onKeyDown={handleKeyDown} ref={ref} role="combobox" tabIndex={tabIndex} />
+            </PopoverPrimitive.Trigger>
+            {isFormControl && <BubbleInput name={context.name} type="hidden" value={String(context.value)} />}
         </>
     );
 });
 
-type SelectContentProps = {
+type SelectContentProps = React.HTMLAttributes<HTMLDivElement> & {
+    align?: 'start' | 'center' | 'end';
     children: JSX.Element[];
+    offset?: number;
 };
 
-const Content = (props: SelectContentProps) => {
+const Content = (externalProps: SelectContentProps) => {
+    let { align = 'start', offset, ...props } = externalProps;
     let context = React.useContext(SelectContext);
-    return <ListboxPrimitive.Root {...props} onChange={context.setValue} value={context.value} />;
+    let handleChange = (value: SelectValue) => {
+        context.setValue(value);
+        context.setOpen(false);
+    };
+    return (
+        <PopoverPrimitive.Content asChild align={align} onOpenAutoFocus={(event) => event.preventDefault()} sideOffset={offset}>
+            <ListboxPrimitive.Root
+                {...props}
+                defaultValue={undefined}
+                onChange={handleChange}
+                ref={context.contentRef}
+                tabIndex={-1}
+                value={context.value}
+            />
+        </PopoverPrimitive.Content>
+    );
 };
 
 type SelectOptionProps = ListboxPrimitive.ListboxOptionProps;
 const Option = React.forwardRef<HTMLDivElement, SelectOptionProps>(function Option(props, ref) {
-    return <ListboxPrimitive.Option {...props} ref={ref} />;
+    let context = React.useContext(SelectContext);
+    let handleClick = () => {
+        context.setOpen(false);
+    };
+    return <ListboxPrimitive.Option {...props} onClick={handleClick} ref={ref} />;
 });
 
 type SelectProps = {
+    defaultOpen?: boolean;
     defaultValue?: SelectValue;
     children: any;
     name?: string;
     onChange?: (value: SelectValue) => void;
+    onOpenChange?: (open: boolean) => void;
+    open?: boolean;
     value?: SelectValue;
 };
 
 const Root = (props: SelectProps) => {
-    let { children, defaultValue: defaultProp, name, onChange, value: prop } = props;
+    let { children, defaultOpen, defaultValue: defaultProp, name, onChange, onOpenChange, open: openProp, value: prop } = props;
+    let contentRef = React.useRef(null);
+    let [open, setOpen] = useControllableState<boolean>({
+        prop: openProp,
+        defaultProp: defaultOpen,
+        onChange: onOpenChange,
+    });
     let [value, setValue] = useControllableState<SelectValue>({
         prop,
         defaultProp,
         onChange,
     });
     let context = {
+        contentRef,
         name,
+        open,
+        setOpen,
         setValue,
         value,
     };
 
-    return <SelectContext.Provider value={context}>{children}</SelectContext.Provider>;
+    return (
+        <SelectContext.Provider value={context}>
+            <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+                {children}
+            </PopoverPrimitive.Root>
+        </SelectContext.Provider>
+    );
 };
 
 export {

@@ -16,6 +16,10 @@ const options = [
         value: 'dk',
     },
     {
+        text: 'France',
+        value: 'fr',
+    },
+    {
         text: 'Guernsey',
         value: 'gsy',
     },
@@ -26,6 +30,14 @@ const options = [
     {
         text: 'New Zealand',
         value: 'nz',
+    },
+    {
+        text: 'Norway',
+        value: 'no',
+    },
+    {
+        text: 'Sweden',
+        value: 'swe',
     },
     {
         text: 'Switzerland',
@@ -40,8 +52,8 @@ export const Uncontrolled = (args: any) => {
     };
 
     return (
-        <form className="space-x-2" onSubmit={handleSubmit}>
-            <Listbox defaultValue="je" name="country">
+        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+            <Listbox className="w-32" defaultValue="je" name="country">
                 {options.map((item) => (
                     <Listbox.Option key={item.value} value={item.value}>
                         {item.text}
@@ -61,7 +73,7 @@ export const Controlled = (args: any) => {
     return (
         <>
             <p>Country: {country ? `${country} (${options.find((i) => i.value === country)?.text})` : ''}</p>
-            <Listbox onChange={setCountry} value={country}>
+            <Listbox className="w-32" onChange={setCountry} value={country}>
                 {options.map((item) => (
                     <Listbox.Option key={item.value} value={item.value}>
                         {item.text}

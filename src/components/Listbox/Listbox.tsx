@@ -10,10 +10,10 @@ const Option = React.forwardRef<HTMLDivElement, ListboxOptionProps>(function Opt
     return <ListboxPrimitive.Option {...props} ref={ref} />;
 });
 
-type ListboxProps = ListboxPrimitive.ListboxProps;
+type ListboxProps = Omit<ListboxPrimitive.ListboxProps, 'changeOnActive'>;
 
 const Listbox = React.forwardRef<HTMLDivElement, ListboxProps>(function Listbox(props, ref) {
-    return <ListboxPrimitive.Root {...props} ref={ref} />;
+    return <ListboxPrimitive.Root {...props} changeOnActive ref={ref} />;
 }) as React.ForwardRefExoticComponent<ListboxProps> & {
     Option: React.ForwardRefExoticComponent<ListboxOptionProps>;
 };
