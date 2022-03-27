@@ -1,6 +1,6 @@
-import { addons } from "@storybook/addons";
+import { addons } from '@storybook/addons';
 
 addons.setConfig({
-  showPanel: true,
-  enableShortcuts: false,
+    showPanel: true,
+    enableShortcuts: false,
 });
