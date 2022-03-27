@@ -24,31 +24,9 @@ const createFakeData = (creator: (i: number) => object, length: number) => {
     return makeDataLevel();
 };
 
-export const Primitive = (args: TableProps) => {
-    return (
-        <Table
-            {...args}
-            data={createFakeData(() => {
-                return {
-                    firstName: faker.name.firstName(),
-                    lastName: faker.name.lastName(),
-                    address: {
-                        line1: faker.address.streetName(),
-                        city: faker.address.cityName(),
-                    },
-                    lastName2: faker.name.lastName(),
-                    lastName3: faker.name.lastName(),
-                    lastName4: faker.name.lastName(),
-                    lastName5: faker.name.lastName(),
-                    lastName6: faker.name.lastName(),
-                };
-            }, 10)}
-        />
-    );
-};
-
 const data = createFakeData((i: number) => {
     return {
+        id: faker.datatype.number(),
         firstName: i % 3 === 0 ? `${faker.name.firstName()}-${faker.name.firstName()}` : faker.name.firstName(),
         lastName: faker.name.lastName(),
         address: {
@@ -63,11 +41,20 @@ const data = createFakeData((i: number) => {
     };
 }, 1000);
 
-export const Test = (args: TableProps) => {
+export const Default = (args: TableProps) => {
     return (
         <Table {...args} data={data}>
-            <Table.Column accessor="firstName" title="Firstname" width="max-content" />
-            <Table.Column accessor="lastName" title="Lastname" width="max-content" />
+            <Table.Column accessor="id" title="Id" sticky />
+            <Table.Column accessor="firstName" title="Firstname" />
+            <Table.Column accessor="lastName" title="Lastname" className="w-96" />
+            <Table.Column accessor="lastName2" title="Lastname2" />
+            <Table.Column accessor="lastName3" title="Lastname3" />
+            <Table.Column accessor="lastName4" title="Lastname4" />
+            <Table.Column accessor="lastName5" title="Lastname5" />
+            <Table.Column accessor="lastName6" title="Lastname6" />
+            <Table.Column accessor="address" renderer={(address) => address.city} title="City" />
+            <Table.Column accessor="address" renderer={(address) => address.city} title="City" />
+            <Table.Column accessor="address" renderer={(address) => address.city} title="City" />
             <Table.Column accessor="address" renderer={(address) => address.city} title="City" />
         </Table>
     );
