@@ -1,0 +1,7 @@
+[role='combobox'] {
+    @apply border-2 border-gray-300 rounded h-7 px-2;
+}
+
+[aria-role='combobox'][aria-invalid] {
+    @apply border-red-500;
+}
