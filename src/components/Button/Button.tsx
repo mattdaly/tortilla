@@ -1,33 +1,21 @@
-import {
-    Button as ButtonPrimitive,
-    ButtonProps as PrimitiveButtonProps,
-} from '../../primitives/Button/Button';
-import { className } from '../../utilities/className';
+import React from 'react';
+import { AlertDialogProps } from '../AlertDialog/AlertDialog';
+import './Button.css';
 
-type ButtonProps = PrimitiveButtonProps & {
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     appearance?: 'primary' | 'secondary';
+    alertDialog?: (props: Partial<AlertDialogProps>) => JSX.Element;
 };
 
-const Button = className<HTMLButtonElement, ButtonProps>(
-    ButtonPrimitive,
-    (props: ButtonProps) => {
-        const common = 'text-sm rounded leading-7 px-3 focus:outline-2';
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(externalProps, externalRef) {
+    let { appearance = 'secondary', alertDialog, ...props } = externalProps;
+    let button = <button {...props} data-appearance={appearance} ref={externalRef} />;
 
-        switch (props.appearance) {
-            case 'primary':
-                return [
-                    'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white focus:outline-purple-800',
-                    common,
-                ].join(' ');
-
-            case 'secondary':
-            default:
-                return [
-                    'bg-gradient-to-r from-sky-200 to-blue-200 hover:from-sky-100 hover:to-blue-100 focus:outline-blue-400',
-                    common,
-                ].join(' ');
-        }
+    if (typeof alertDialog === 'function') {
+        button = alertDialog({ trigger: button });
     }
-);
+
+    return button;
+});
 
 export { Button, ButtonProps };
