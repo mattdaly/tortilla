@@ -1,59 +1,186 @@
 import React from 'react';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/solid';
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
+import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { useMergedRef } from '../../hooks/useMergedRef';
-import * as SelectPrimitive from '../../primitives/Select/Select';
-import './Select.css';
+import { createKeyboardEvent } from '../../utilities/createKeyboardEvent';
+import * as CollectionPrimitive from '../../primitives/Collection/Collection';
+import { useIsFormControl } from '../../hooks/useIsFormControl';
+import { BubbleInput } from '../../primitives/BubbleInput';
 import { useBoundingClientRectListener } from '../../hooks/useBoundingClientRectListener';
+import './Select.css';
+import { Icon } from '../Icon/Icon';
 
-type SelectValue = SelectPrimitive.SelectValue;
-type SelectOptionProps = SelectPrimitive.SelectOptionProps;
+const filterByQuery =
+    (query: string, strategy: 'startsWith' | 'matches' = 'startsWith') =>
+    (child: React.ReactElement<SelectOptionProps>) => {
+        let value;
 
-const Option = React.forwardRef<HTMLDivElement, SelectOptionProps>(function Option(props, ref) {
-    return <SelectPrimitive.Option {...props} ref={ref} />;
+        if (child.props.textValue) {
+            value = child.props.textValue.toLowerCase();
+        } else {
+            value = String(child.props.children).toLowerCase();
+        }
+
+        if (strategy === 'matches') {
+            return value === query.toLowerCase();
+        }
+
+        return value.startsWith(query.toLowerCase());
+    };
+
+type SelectValue = string | number | null;
+
+type SelectOptionProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'value'> & {
+    children: string | JSX.Element;
+    textValue?: string;
+    value: SelectValue;
+};
+
+const Option = React.forwardRef<HTMLDivElement, SelectOptionProps>(function Option(externalProps, ref) {
+    let { textValue, value, ...props } = externalProps;
+
+    return <CollectionPrimitive.Item {...props} ref={ref} role="option" />;
 });
 
-type SelectProps = SelectPrimitive.SelectProps &
-    Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'defaultValue' | 'name' | 'onChange' | 'value'>;
+const getOptionId = (id: string, child: React.ReactElement<SelectOptionProps>) => `${id}-${child.props.id ?? child.props.value}`;
 
-const Select = React.forwardRef<HTMLDivElement, SelectProps>(function Select(externalProps, externalRef) {
-    let { children, defaultOpen, defaultValue, name, open: openProp, onChange, onOpenChange, value, ...props } = externalProps;
-    let ref = useMergedRef<HTMLDivElement>(externalRef);
-    let [open, setOpen] = useControllableState<boolean>({
-        prop: openProp,
-        defaultProp: defaultOpen,
-        onChange: onOpenChange,
+type SelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'defaultValue' | 'onChange' | 'value'> & {
+    children: React.ReactElement<SelectOptionProps>[];
+    defaultValue?: SelectValue;
+    name?: string;
+    onChange?: (value: SelectValue) => void;
+    value?: SelectValue;
+};
+
+const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(externalProps, externalRef) {
+    let {
+        children,
+        defaultValue: defaultProp,
+        id: nativeId,
+        name,
+        onChange,
+        tabIndex = 0,
+        value: prop,
+        ...props
+    } = externalProps;
+    let id = nativeId ?? React.useId();
+    let buttonRef = useMergedRef<HTMLDivElement>(externalRef);
+    let collectionRef = React.useRef<HTMLDivElement>(null);
+    // active option in the collection
+    let [active, setActive] = React.useState<number>(0);
+    // value of the Select
+    let [value, setValue] = useControllableState<any>({
+        prop,
+        defaultProp,
+        onChange,
     });
+    let [open, setOpen] = React.useState(false);
+    // align the listbox min width with the width of the input - it should never be smaller
+    let dimensions = useBoundingClientRectListener(buttonRef);
 
-    let dimensions = useBoundingClientRectListener(ref, [open]);
+    // uncontrolled support
+    let isFormControl = useIsFormControl(buttonRef);
+
+    // people don't read documentation
+    React.useEffect(() => {
+        let hasComplexChildrenWithoutTextValue = children.some(
+            (child) => typeof child.props.children !== 'string' && !child.props.textValue
+        );
+
+        if (hasComplexChildrenWithoutTextValue) {
+            let identifier = name ? `(name='${name}') ` : nativeId ? `(id='${nativeId}') ` : '';
+            console.error(
+                `Tortilla - Select ${identifier}has options that contain complex children, you must pass a textValue string for those options for the Select to function correctly. Typeahead will fail without it.`
+            );
+        }
+    }, []);
+
+    let handleChange = (child: React.ReactElement<SelectOptionProps>) => {
+        setValue(child.props.value);
+        setOpen(false);
+    };
+
+    // shortcuts follow the the WAI-ARIA recommendations for textbox
+    // at https://www.w3.org/TR/wai-aria-practices/examples/Select/Select-autocomplete-list.html
+    let handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            setOpen(!open);
+        } else if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+            setOpen(true);
+
+            if (event.key === 'ArrowUp') {
+                setActive(children.length - 1);
+            } else {
+                // there is a recommended shortcut for alt + arrow down that opens the listbox with no active option
+                // but it's annoying to support undefined as well as number, so skipped it for now
+                setActive(0);
+            }
+        } else if (event.key === 'Escape' && open) {
+            setOpen(false);
+        }
+
+        // the focus should always remain on the input, so we forward events on to the listbox
+        collectionRef.current?.dispatchEvent(createKeyboardEvent(event));
+    };
+
+    // shortcuts follow the the WAI-ARIA recommendations for listbox
+    // at https://www.w3.org/TR/wai-aria-practices/examples/Select/Select-autocomplete-list.html
+    // the collection itself controls directional key shortcuts internally
+    let handleCollectionKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (CollectionPrimitive.isAriaSelectionKey(event)) {
+            if (event.key !== 'Tab') {
+                event.preventDefault();
+            }
+
+            handleChange(children[active]);
+            setOpen(false);
+        }
+    };
 
     return (
-        <SelectPrimitive.Root
-            defaultOpen={defaultOpen}
-            defaultValue={defaultValue}
-            name={name}
-            onChange={onChange}
-            onOpenChange={setOpen}
-            open={open}
-            value={value}
-        >
-            <SelectPrimitive.Trigger {...props} ref={ref}>
-                <SelectPrimitive.Value>
-                    {(value: any) =>
-                        children.find((child: React.ReactElement<SelectOptionProps>) => child.props.value === value)?.props
-                            .children ?? ''
-                    }
-                </SelectPrimitive.Value>
-                {open ? <ChevronUpIcon /> : <ChevronDownIcon />}
-            </SelectPrimitive.Trigger>
-            <SelectPrimitive.Content align="start" offset={3} style={{ minWidth: `${dimensions?.width}px` }}>
-                {children}
-            </SelectPrimitive.Content>
-        </SelectPrimitive.Root>
+        <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+            {isFormControl && <BubbleInput name={name} type="hidden" value={String(value)} />}
+            <PopoverPrimitive.Trigger asChild type={undefined}>
+                <div
+                    {...props}
+                    aria-activedescendant={open ? getOptionId(id, children[active]) : undefined}
+                    aria-haspopup="listbox"
+                    id={id}
+                    onKeyDown={handleKeyDown}
+                    ref={buttonRef}
+                    role="combobox"
+                    tabIndex={tabIndex}
+                >
+                    <span>{children.find((child) => child.props.value === value)?.props.children ?? null}</span>
+                    <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} />
+                </div>
+            </PopoverPrimitive.Trigger>
+            <PopoverPrimitive.Content asChild align="start" onOpenAutoFocus={(event) => event.preventDefault()} sideOffset={3}>
+                {children.length ? (
+                    <CollectionPrimitive.Collection
+                        active={active}
+                        onChangeActive={setActive}
+                        onKeyDown={handleCollectionKeyDown}
+                        ref={collectionRef}
+                        role="listbox"
+                        style={{ minWidth: dimensions?.width ? `${dimensions.width}px` : undefined }}
+                        tabIndex={-1}
+                    >
+                        {children.map((child) =>
+                            React.cloneElement(child, {
+                                'aria-selected': child.props.value === value ? true : undefined,
+                                id: getOptionId(id, child),
+                                onClick: () => handleChange(child),
+                            })
+                        )}
+                    </CollectionPrimitive.Collection>
+                ) : null}
+            </PopoverPrimitive.Content>
+        </PopoverPrimitive.Root>
     );
 }) as React.ForwardRefExoticComponent<SelectProps> & {
     Option: React.ForwardRefExoticComponent<SelectOptionProps>;
 };
 Select.Option = Option;
 
-export { Select, SelectProps, SelectValue };
+export { Select, SelectProps, SelectOptionProps, SelectValue };

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Button } from '../Button/Button';
-import { Select, SelectValue } from './Select';
+import { Combobox, ComboboxValue } from './Combobox';
 
 export default {
-    title: 'Select',
+    title: 'Combobox',
 };
 
 const options = [
@@ -53,13 +53,13 @@ export const Uncontrolled = (args: any) => {
 
     return (
         <form className="flex gap-3" onSubmit={handleSubmit}>
-            <Select className="w-32" defaultValue="je" name="country">
+            <Combobox defaultValue="je" className="w-32" name="country">
                 {options.map((item) => (
-                    <Select.Option key={item.value} value={item.value}>
+                    <Combobox.Option key={item.value} value={item.value}>
                         {item.text}
-                    </Select.Option>
+                    </Combobox.Option>
                 ))}
-            </Select>
+            </Combobox>
             <Button type="submit" appearance="primary">
                 Submit
             </Button>
@@ -68,18 +68,18 @@ export const Uncontrolled = (args: any) => {
 };
 
 export const Controlled = (args: any) => {
-    const [country, setCountry] = React.useState<SelectValue>('je');
+    const [country, setCountry] = React.useState<ComboboxValue>('je');
 
     return (
         <>
             <p>Country: {country ? `${country} (${options.find((i) => i.value === country)?.text})` : ''}</p>
-            <Select className="w-32" onChange={setCountry} value={country}>
+            <Combobox className="w-32" onChange={setCountry} value={country}>
                 {options.map((item) => (
-                    <Select.Option key={item.value} value={item.value}>
+                    <Combobox.Option key={item.value} value={item.value}>
                         {item.text}
-                    </Select.Option>
+                    </Combobox.Option>
                 ))}
-            </Select>
+            </Combobox>
         </>
     );
 };

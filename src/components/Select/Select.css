@@ -1,9 +1,13 @@
 [role='combobox'] {
-    @apply border-2 border-gray-300 rounded h-7 pl-2 pr-0.5 cursor-pointer flex gap-2 items-center justify-between;
+    @apply border-2 border-gray-300 rounded h-7 pl-2 pr-0.5 cursor-pointer flex gap-1 items-center justify-between;
 }
 
-[role='combobox'] svg {
-    @apply h-5 w-5 fill-gray-500;
+[role='combobox'] > span {
+    @apply flex-grow truncate;
+}
+
+[role='combobox'] > svg {
+    @apply h-5 w-5 fill-gray-500 flex-shrink-0 flex-grow-0;
 }
 
 [role='combobox']:focus {

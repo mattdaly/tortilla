@@ -1,6 +1,6 @@
 [role='listbox'] {
     @apply flex flex-col border-2 border-gray-300 rounded overflow-scroll bg-white;
-    height: calc((2 * theme('borderWidth.2')) + theme('spacing.36'));
+    max-height: calc((2 * theme('borderWidth.2')) + theme('spacing.36'));
 }
 
 [role='listbox']:focus {
@@ -16,9 +16,9 @@
 }
 
 [role='listbox'] [role='option'][aria-current='true'] {
-    @apply bg-blue-100;
+    @apply bg-gradient-to-r from-sky-200 to-blue-200;
 }
 
 [role='listbox'] [role='option'][aria-selected='true'] {
-    @apply bg-blue-200;
+    @apply bg-gradient-to-r from-sky-300 to-blue-400 font-bold;
 }

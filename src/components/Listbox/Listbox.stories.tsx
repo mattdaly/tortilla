@@ -53,7 +53,7 @@ export const Uncontrolled = (args: any) => {
 
     return (
         <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-            <Listbox className="w-32" defaultValue="je" name="country">
+            <Listbox className="w-32" name="country">
                 {options.map((item) => (
                     <Listbox.Option key={item.value} value={item.value}>
                         {item.text}
