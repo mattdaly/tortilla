@@ -5,3 +5,15 @@ input {
 input[aria-invalid] {
     @apply border-red-500;
 }
+
+.tortilla-Field {
+    @apply inline-flex relative text-sm;
+}
+
+.tortilla-Field input {
+    @apply pr-6;
+}
+
+.tortilla-Field svg {
+    @apply absolute top-0 right-0 mt-1 mr-1;
+}

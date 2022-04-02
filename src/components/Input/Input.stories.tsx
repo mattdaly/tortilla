@@ -33,7 +33,6 @@ export const Uncontrolled = (args: any) => {
             </Button>
         </form>
     );
-    return;
 };
 
 export const Controlled = (args: any) => {
@@ -44,4 +43,8 @@ export const Controlled = (args: any) => {
             <Input {...args} onChange={setName} placeholder="Name..." value={name} />
         </>
     );
+};
+
+export const Icon = (args: any) => {
+    return <Input {...args} icon="BeakerIcon" placeholder="Name..." />;
 };
