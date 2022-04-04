@@ -9,44 +9,24 @@ import { BubbleInput } from '../../primitives/BubbleInput';
 import { useBoundingClientRectListener } from '../../hooks/useBoundingClientRectListener';
 import { Input } from '../Input/Input';
 
-const filterByQuery =
-    (query: string, strategy: 'startsWith' | 'matches' = 'startsWith') =>
-    (child: React.ReactElement<ComboboxOptionProps>) => {
-        let value;
-
-        if (child.props.textValue) {
-            value = child.props.textValue.toLowerCase();
-        } else {
-            value = String(child.props.children).toLowerCase();
-        }
-
-        if (strategy === 'matches') {
-            return value === query.toLowerCase();
-        }
-
-        return value.startsWith(query.toLowerCase());
-    };
-
 type ComboboxValue = string | number | null;
 
 type ComboboxOptionProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'value'> & {
     children: string | JSX.Element;
+    disabled?: boolean;
     textValue?: string;
     value: ComboboxValue;
 };
 
 const Option = React.forwardRef<HTMLDivElement, ComboboxOptionProps>(function Option(externalProps, ref) {
-    let { textValue, value, ...props } = externalProps;
-
-    return <CollectionPrimitive.Item {...props} ref={ref} role="option" />;
+    let { disabled, textValue, value, ...props } = externalProps;
+    return <CollectionPrimitive.Item {...props} aria-disabled={disabled ? true : undefined} ref={ref} role="option" />;
 });
-
-const getOptionId = (id: string, child: React.ReactElement<ComboboxOptionProps>) =>
-    `${id}-${child.props.id ?? child.props.value}`;
 
 type ComboboxProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'children' | 'defaultValue' | 'onChange' | 'value'> & {
     children: React.ReactElement<ComboboxOptionProps>[];
     defaultValue?: ComboboxValue;
+    disabled?: boolean;
     onChange?: (value: ComboboxValue) => void;
     value?: ComboboxValue;
 };
@@ -55,10 +35,11 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
     let {
         children,
         defaultValue: defaultProp,
+        disabled,
         id: nativeId,
         name,
         onChange,
-        tabIndex = 0,
+        tabIndex = disabled ? -1 : 0,
         value: prop,
         ...props
     } = externalProps;
@@ -108,7 +89,9 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
     }, []);
 
     let handleChange = (child: React.ReactElement<ComboboxOptionProps>) => {
+        setActive(0);
         setValue(child.props.value);
+
         setQuery(child.props.textValue ?? String(child.props.children));
         setOpen(false);
     };
@@ -138,6 +121,11 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
     // shortcuts follow the the WAI-ARIA recommendations for textbox
     // at https://www.w3.org/TR/wai-aria-practices/examples/combobox/combobox-autocomplete-list.html
     let handleInputKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (disabled) {
+            event.preventDefault();
+            return;
+        }
+
         // backspace bubbles up to the browser back functionality, we don't want that
         if (event.key === 'Backspace') {
             return;
@@ -178,14 +166,29 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
     // at https://www.w3.org/TR/wai-aria-practices/examples/combobox/combobox-autocomplete-list.html
     // the collection itself controls directional key shortcuts internally
     let handleCollectionKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (disabled) {
+            event.preventDefault();
+            return;
+        }
+
         if (CollectionPrimitive.isAriaSelectionKey(event)) {
             if (event.key !== 'Tab') {
                 event.preventDefault();
             }
 
             handleChange(data[active]);
-            setOpen(false);
         }
+    };
+
+    let createClickHandler = (child: React.ReactElement<ComboboxOptionProps>) => {
+        if (disabled || child.props.disabled) {
+            return;
+        }
+
+        return (event: React.MouseEvent<HTMLDivElement>) => {
+            event.preventDefault();
+            handleChange(child);
+        };
     };
 
     return (
@@ -194,9 +197,10 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
             <PopoverPrimitive.Trigger asChild type={undefined}>
                 <Input
                     {...props}
-                    aria-activedescendant={open ? getOptionId(id, data[active]) : undefined}
+                    aria-activedescendant={open && active ? getOptionId(id, data[active]) : undefined}
                     aria-haspopup={undefined}
                     aria-autocomplete="list"
+                    disabled={disabled}
                     id={id}
                     icon={open ? 'ChevronUpIcon' : 'ChevronDownIcon'}
                     onChange={handleInputChange}
@@ -222,7 +226,7 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
                             React.cloneElement(child, {
                                 'aria-selected': child.props.value === value ? true : undefined,
                                 id: getOptionId(id, child),
-                                onClick: () => handleChange(child),
+                                onClick: createClickHandler(child),
                             })
                         )}
                     </CollectionPrimitive.Collection>
@@ -236,3 +240,28 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
 Combobox.Option = Option;
 
 export { Combobox, ComboboxProps, ComboboxOptionProps, ComboboxValue };
+
+const filterByQuery =
+    (query: string, strategy: 'startsWith' | 'matches' = 'startsWith') =>
+    (child: React.ReactElement<ComboboxOptionProps>) => {
+        let value;
+
+        if (child.props.disabled) {
+            return false;
+        }
+
+        if (child.props.textValue) {
+            value = child.props.textValue.toLowerCase();
+        } else {
+            value = String(child.props.children).toLowerCase();
+        }
+
+        if (strategy === 'matches') {
+            return value === query.toLowerCase();
+        }
+
+        return value.startsWith(query.toLowerCase());
+    };
+
+const getOptionId = (id: string, child: React.ReactElement<ComboboxOptionProps>) =>
+    `${id}-${child.props.id ?? child.props.value}`;

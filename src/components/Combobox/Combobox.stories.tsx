@@ -4,6 +4,15 @@ import { Combobox, ComboboxValue } from './Combobox';
 
 export default {
     title: 'Combobox',
+    component: Combobox,
+    args: {
+        disabled: false,
+    },
+    argTypes: {
+        disabled: {
+            control: { type: 'boolean' },
+        },
+    },
 };
 
 const options = [
@@ -16,6 +25,7 @@ const options = [
         value: 'dk',
     },
     {
+        disabled: true,
         text: 'France',
         value: 'fr',
     },
@@ -53,9 +63,9 @@ export const Uncontrolled = (args: any) => {
 
     return (
         <form className="flex gap-3" onSubmit={handleSubmit}>
-            <Combobox defaultValue="je" className="w-32" name="country">
+            <Combobox {...args} defaultValue="je" className="w-32" name="country">
                 {options.map((item) => (
-                    <Combobox.Option key={item.value} value={item.value}>
+                    <Combobox.Option key={item.value} disabled={item.disabled} value={item.value}>
                         {item.text}
                     </Combobox.Option>
                 ))}
@@ -73,7 +83,7 @@ export const Controlled = (args: any) => {
     return (
         <>
             <p>Country: {country ? `${country} (${options.find((i) => i.value === country)?.text})` : ''}</p>
-            <Combobox className="w-32" onChange={setCountry} value={country}>
+            <Combobox {...args} className="w-32" onChange={setCountry} value={country}>
                 {options.map((item) => (
                     <Combobox.Option key={item.value} value={item.value}>
                         {item.text}

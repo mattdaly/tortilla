@@ -1,9 +1,13 @@
 input {
-    @apply border-2 border-gray-300 rounded h-7 px-2;
+    @apply border-2 border-gray-300 bg-white rounded h-7 px-2 text-black;
 }
 
 input[aria-invalid] {
     @apply border-red-500;
+}
+
+input[disabled] {
+    @apply border-gray-200 text-gray-300 pointer-events-none;
 }
 
 .tortilla-Field {
@@ -15,5 +19,9 @@ input[aria-invalid] {
 }
 
 .tortilla-Field svg {
-    @apply absolute top-0 right-0 mt-1 mr-1;
+    @apply absolute top-0 right-0 mt-1 mr-1 pointer-events-none;
+}
+
+.tortilla-Field input[disabled] + svg {
+    @apply fill-gray-300;
 }

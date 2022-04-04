@@ -4,6 +4,15 @@ import { Select, SelectValue } from './Select';
 
 export default {
     title: 'Select',
+    component: Select,
+    args: {
+        disabled: false,
+    },
+    argTypes: {
+        disabled: {
+            control: { type: 'boolean' },
+        },
+    },
 };
 
 const options = [
@@ -17,6 +26,7 @@ const options = [
     },
     {
         text: 'France',
+        disabled: true,
         value: 'fr',
     },
     {
@@ -53,9 +63,9 @@ export const Uncontrolled = (args: any) => {
 
     return (
         <form className="flex gap-3" onSubmit={handleSubmit}>
-            <Select className="w-32" defaultValue="je" name="country">
+            <Select {...args} className="w-32" defaultValue="je" name="country">
                 {options.map((item) => (
-                    <Select.Option key={item.value} value={item.value}>
+                    <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
                         {item.text}
                     </Select.Option>
                 ))}
@@ -73,9 +83,9 @@ export const Controlled = (args: any) => {
     return (
         <>
             <p>Country: {country ? `${country} (${options.find((i) => i.value === country)?.text})` : ''}</p>
-            <Select className="w-32" onChange={setCountry} value={country}>
+            <Select {...args} className="w-32" onChange={setCountry} value={country}>
                 {options.map((item) => (
-                    <Select.Option key={item.value} value={item.value}>
+                    <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
                         {item.text}
                     </Select.Option>
                 ))}

@@ -32,14 +32,15 @@ type SelectValue = string | number | null;
 
 type SelectOptionProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'value'> & {
     children: string | JSX.Element;
+    disabled?: boolean;
     textValue?: string;
     value: SelectValue;
 };
 
 const Option = React.forwardRef<HTMLDivElement, SelectOptionProps>(function Option(externalProps, ref) {
-    let { textValue, value, ...props } = externalProps;
+    let { disabled, textValue, value, ...props } = externalProps;
 
-    return <CollectionPrimitive.Item {...props} ref={ref} role="option" />;
+    return <CollectionPrimitive.Item {...props} aria-disabled={disabled ? true : undefined} ref={ref} role="option" />;
 });
 
 const getOptionId = (id: string, child: React.ReactElement<SelectOptionProps>) => `${id}-${child.props.id ?? child.props.value}`;
@@ -47,6 +48,7 @@ const getOptionId = (id: string, child: React.ReactElement<SelectOptionProps>) =
 type SelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'defaultValue' | 'onChange' | 'value'> & {
     children: React.ReactElement<SelectOptionProps>[];
     defaultValue?: SelectValue;
+    disabled?: boolean;
     name?: string;
     onChange?: (value: SelectValue) => void;
     value?: SelectValue;
@@ -56,10 +58,11 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     let {
         children,
         defaultValue: defaultProp,
+        disabled,
         id: nativeId,
         name,
         onChange,
-        tabIndex = 0,
+        tabIndex = disabled ? -1 : 0,
         value: prop,
         ...props
     } = externalProps;
@@ -103,6 +106,11 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     // shortcuts follow the the WAI-ARIA recommendations for textbox
     // at https://www.w3.org/TR/wai-aria-practices/examples/Select/Select-autocomplete-list.html
     let handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (disabled) {
+            event.preventDefault();
+            return;
+        }
+
         if (event.key === 'Enter' || event.key === ' ') {
             setOpen(!open);
         } else if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
@@ -127,14 +135,29 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     // at https://www.w3.org/TR/wai-aria-practices/examples/Select/Select-autocomplete-list.html
     // the collection itself controls directional key shortcuts internally
     let handleCollectionKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (disabled) {
+            event.preventDefault();
+            return;
+        }
+
         if (CollectionPrimitive.isAriaSelectionKey(event)) {
             if (event.key !== 'Tab') {
                 event.preventDefault();
             }
 
             handleChange(children[active]);
-            setOpen(false);
         }
+    };
+
+    let createClickHandler = (child: React.ReactElement<SelectOptionProps>) => {
+        if (disabled || child.props.disabled) {
+            return;
+        }
+
+        return (event: React.MouseEvent<HTMLDivElement>) => {
+            event.preventDefault();
+            handleChange(child);
+        };
     };
 
     return (
@@ -144,6 +167,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
                 <div
                     {...props}
                     aria-activedescendant={open ? getOptionId(id, children[active]) : undefined}
+                    aria-disabled={disabled ? true : undefined}
                     aria-haspopup="listbox"
                     id={id}
                     onKeyDown={handleKeyDown}
@@ -170,7 +194,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
                             React.cloneElement(child, {
                                 'aria-selected': child.props.value === value ? true : undefined,
                                 id: getOptionId(id, child),
-                                onClick: () => handleChange(child),
+                                onClick: createClickHandler(child),
                             })
                         )}
                     </CollectionPrimitive.Collection>
