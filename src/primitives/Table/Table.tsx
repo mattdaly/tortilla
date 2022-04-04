@@ -2,8 +2,9 @@ import React from 'react';
 
 type TableColumnProps = {
     accessor: string;
-    renderer: (value: any) => JSX.Element;
-    title: JSX.Element;
+    className?: string;
+    renderer?: (value: any) => JSX.Element;
+    title: string | JSX.Element;
     sticky?: boolean;
     width?: 'auto' | 'min-content' | 'max-content';
 };
@@ -26,7 +27,7 @@ const Table = React.forwardRef<HTMLDivElement, TableProps>(function Table(extern
     let columns = React.Children.toArray(children).map((child) => child.props);
 
     return (
-        <div className="overflow-scroll relative" style={{ height: '400px' }}>
+        <div className="overflow-auto relative" style={{ height: '400px', width: '1200px' }}>
             <div
                 {...props}
                 className="grid"
