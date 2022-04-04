@@ -1,5 +1,5 @@
 [role='combobox'] {
-    @apply border-2 border-gray-300 rounded h-7 pl-2 pr-0.5 cursor-pointer flex gap-1 items-center justify-between;
+    @apply border-2 border-gray-300 rounded h-7 leading-7  pl-2 pr-0.5 cursor-pointer flex gap-1 items-center justify-between;
 }
 
 [role='combobox'] > span {

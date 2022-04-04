@@ -1,5 +1,5 @@
 input {
-    @apply border-2 border-gray-300 bg-white rounded h-7 px-2 text-black;
+    @apply border-2 border-gray-300 bg-white h-7 leading-7 rounded px-2 text-black;
 }
 
 input[aria-invalid] {

@@ -1,5 +1,5 @@
 button {
-    @apply rounded leading-7 px-3 gap-3 focus:outline-2;
+    @apply rounded h-7 leading-7 px-3 gap-3 focus:outline-2;
 }
 
 button[data-appearance='primary'] {

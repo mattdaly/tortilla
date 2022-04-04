@@ -49,7 +49,7 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
     // active option in the collection
     let [active, setActive] = React.useState<number>(0);
     // value of the combobox
-    let [value, setValue] = useControllableState<any>({
+    let [value, setValue] = useControllableState<ComboboxValue>({
         prop,
         defaultProp,
         onChange,
@@ -73,20 +73,6 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
 
         return _data;
     }, [query]);
-
-    // people don't read documentation
-    React.useEffect(() => {
-        let hasComplexChildrenWithoutTextValue = children.some(
-            (child) => typeof child.props.children !== 'string' && !child.props.textValue
-        );
-
-        if (hasComplexChildrenWithoutTextValue) {
-            let identifier = name ? `(name='${name}') ` : nativeId ? `(id='${nativeId}') ` : '';
-            console.error(
-                `Tortilla - Combobox ${identifier}has options that contain complex children, you must pass a textValue string for those options for the combobox to function correctly. String comparison and rendering will fail without it.`
-            );
-        }
-    }, []);
 
     let handleChange = (child: React.ReactElement<ComboboxOptionProps>) => {
         setActive(0);

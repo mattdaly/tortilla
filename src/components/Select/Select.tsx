@@ -72,7 +72,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     // active option in the collection
     let [active, setActive] = React.useState<number>(0);
     // value of the Select
-    let [value, setValue] = useControllableState<any>({
+    let [value, setValue] = useControllableState<SelectValue>({
         prop,
         defaultProp,
         onChange,
@@ -83,20 +83,6 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
 
     // uncontrolled support
     let isFormControl = useIsFormControl(buttonRef);
-
-    // people don't read documentation
-    React.useEffect(() => {
-        let hasComplexChildrenWithoutTextValue = children.some(
-            (child) => typeof child.props.children !== 'string' && !child.props.textValue
-        );
-
-        if (hasComplexChildrenWithoutTextValue) {
-            let identifier = name ? `(name='${name}') ` : nativeId ? `(id='${nativeId}') ` : '';
-            console.error(
-                `Tortilla - Select ${identifier}has options that contain complex children, you must pass a textValue string for those options for the Select to function correctly. Typeahead will fail without it.`
-            );
-        }
-    }, []);
 
     let handleChange = (child: React.ReactElement<SelectOptionProps>) => {
         setValue(child.props.value);
