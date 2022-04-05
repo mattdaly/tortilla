@@ -58,6 +58,7 @@ type SelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'defa
     multiple?: boolean;
     name?: string;
     onChange?: (value: SelectValue | SelectValue[]) => void;
+    readOnly?: boolean;
     value?: SelectValue | SelectValue[];
 };
 
@@ -70,6 +71,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         multiple = false,
         name,
         onChange,
+        readOnly,
         tabIndex = disabled ? -1 : 0,
         value: prop,
         ...props
@@ -185,13 +187,14 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
 
     return (
         <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-            {isFormControl && <BubbleInput name={name} type="hidden" value={String(value)} />}
+            {isFormControl && <BubbleInput name={name} value={String(value)} />}
             <PopoverPrimitive.Trigger asChild type={undefined}>
                 <div
                     {...props}
                     aria-activedescendant={open ? getOptionId(id, children[active]) : undefined}
                     aria-disabled={disabled ? true : undefined}
                     aria-haspopup="listbox"
+                    aria-readonly={readOnly ? true : undefined}
                     id={id}
                     onKeyDown={handleKeyDown}
                     ref={buttonRef}

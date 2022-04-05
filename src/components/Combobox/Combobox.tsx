@@ -179,7 +179,7 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
 
     return (
         <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-            {isFormControl && <BubbleInput name={name} type="hidden" value={String(value)} />}
+            {isFormControl && <BubbleInput name={name} value={String(value)} />}
             <PopoverPrimitive.Trigger asChild type={undefined}>
                 <Input
                     {...props}

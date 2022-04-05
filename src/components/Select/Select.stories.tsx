@@ -7,9 +7,13 @@ export default {
     component: Select,
     args: {
         disabled: false,
+        readOnly: false,
     },
     argTypes: {
         disabled: {
+            control: { type: 'boolean' },
+        },
+        readOnly: {
             control: { type: 'boolean' },
         },
     },

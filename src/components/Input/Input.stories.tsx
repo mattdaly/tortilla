@@ -8,12 +8,16 @@ export default {
     args: {
         disabled: false,
         invalid: false,
+        readOnly: false,
     },
     argTypes: {
         disabled: {
             control: { type: 'boolean' },
         },
         invalid: {
+            control: { type: 'boolean' },
+        },
+        readOnly: {
             control: { type: 'boolean' },
         },
     },

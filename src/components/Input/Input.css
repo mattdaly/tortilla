@@ -7,7 +7,11 @@ input[aria-invalid] {
 }
 
 input[disabled] {
-    @apply border-gray-200 text-gray-300 pointer-events-none;
+    @apply border-gray-200 text-gray-300 pointer-events-none placeholder:text-gray-300;
+}
+
+input[readonly] {
+    @apply bg-gray-100 pointer-events-none;
 }
 
 .tortilla-Field {
