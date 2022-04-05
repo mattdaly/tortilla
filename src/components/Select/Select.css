@@ -2,8 +2,12 @@
     @apply border-2 border-gray-300 rounded h-7 leading-7  pl-2 pr-0.5 cursor-pointer flex gap-1 items-center justify-between;
 }
 
-[role='combobox'] > span {
+[role='combobox'] > span:first-child {
     @apply flex-grow truncate;
+}
+
+[role='combobox'] > span:nth-child(2) {
+    @apply flex-shrink-0 bg-gray-200 rounded-full h-4 leading-4 text-xs px-1.5;
 }
 
 [role='combobox'] > svg {
@@ -36,7 +40,7 @@
 }
 
 [role='listbox'] [role='option'] {
-    @apply flex w-full h-6 leading-6 px-2 cursor-pointer text-black;
+    @apply flex w-full h-6 leading-6 px-2 cursor-pointer text-black items-center w-full;
 }
 
 [role='listbox'] [role='option']:hover {
@@ -51,8 +55,8 @@
     @apply bg-gradient-to-r from-sky-200 to-blue-200;
 }
 
-[role='listbox'] [role='option'][aria-selected='true'] {
-    @apply bg-gradient-to-r from-sky-300 to-blue-400;
+[role='listbox'] [role='option'][aria-selected='true'] [data-selected-icon] {
+    @apply h-4 w-4 ml-auto flex-shrink-0 flex-grow-0 visible;
 }
 
 [role='listbox'][aria-disabled='true'] {

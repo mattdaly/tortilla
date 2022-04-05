@@ -38,20 +38,27 @@ type SelectOptionProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' |
 };
 
 const Option = React.forwardRef<HTMLDivElement, SelectOptionProps>(function Option(externalProps, ref) {
-    let { disabled, textValue, value, ...props } = externalProps;
+    let { children, disabled, textValue, value, ...props } = externalProps;
+    let isSelected = !!props['aria-selected'];
 
-    return <CollectionPrimitive.Item {...props} aria-disabled={disabled ? true : undefined} ref={ref} role="option" />;
+    return (
+        <CollectionPrimitive.Item {...props} aria-disabled={disabled ? true : undefined} ref={ref} role="option">
+            {children}
+            {isSelected ? <Icon name="CheckIcon" data-selected-icon /> : null}
+        </CollectionPrimitive.Item>
+    );
 });
 
 const getOptionId = (id: string, child: React.ReactElement<SelectOptionProps>) => `${id}-${child.props.id ?? child.props.value}`;
 
 type SelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'defaultValue' | 'onChange' | 'value'> & {
     children: React.ReactElement<SelectOptionProps>[];
-    defaultValue?: SelectValue;
+    defaultValue?: SelectValue | SelectValue[];
     disabled?: boolean;
+    multiple?: boolean;
     name?: string;
-    onChange?: (value: SelectValue) => void;
-    value?: SelectValue;
+    onChange?: (value: SelectValue | SelectValue[]) => void;
+    value?: SelectValue | SelectValue[];
 };
 
 const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(externalProps, externalRef) {
@@ -60,6 +67,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         defaultValue: defaultProp,
         disabled,
         id: nativeId,
+        multiple = false,
         name,
         onChange,
         tabIndex = disabled ? -1 : 0,
@@ -69,14 +77,17 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     let id = nativeId ?? React.useId();
     let buttonRef = useMergedRef<HTMLDivElement>(externalRef);
     let collectionRef = React.useRef<HTMLDivElement>(null);
-    // active option in the collection
-    let [active, setActive] = React.useState<number>(0);
+
     // value of the Select
-    let [value, setValue] = useControllableState<SelectValue>({
+    let [value, setValue] = useControllableState<SelectValue | SelectValue[]>({
         prop,
         defaultProp,
         onChange,
     });
+    // active option in the collection
+    let [active, setActive] = React.useState<number>(
+        value !== undefined ? children.findIndex((child) => child.props.value === value) ?? 0 : 0
+    );
     let [open, setOpen] = React.useState(false);
     // align the listbox min width with the width of the input - it should never be smaller
     let dimensions = useBoundingClientRectListener(buttonRef);
@@ -85,8 +96,29 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     let isFormControl = useIsFormControl(buttonRef);
 
     let handleChange = (child: React.ReactElement<SelectOptionProps>) => {
-        setValue(child.props.value);
-        setOpen(false);
+        if (multiple) {
+            if (value === undefined) {
+                setValue([child.props.value]);
+            } else if (Array.isArray(value)) {
+                if (value.includes(child.props.value)) {
+                    setValue(value.filter((v) => v !== child.props.value));
+                } else {
+                    setValue([...value, child.props.value]);
+                }
+            } else {
+                if (value === child.props.value) {
+                    setValue([]);
+                } else {
+                    setValue([value, child.props.value]);
+                }
+            }
+        } else {
+            setValue(child.props.value);
+        }
+
+        if (!multiple) {
+            setOpen(false);
+        }
     };
 
     // shortcuts follow the the WAI-ARIA recommendations for textbox
@@ -98,7 +130,13 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         }
 
         if (event.key === 'Enter' || event.key === ' ') {
-            setOpen(!open);
+            if (multiple && event.key === ' ') {
+                if (!open) {
+                    setOpen(true);
+                }
+            } else {
+                setOpen(!open);
+            }
         } else if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
             setOpen(true);
 
@@ -141,7 +179,6 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         }
 
         return (event: React.MouseEvent<HTMLDivElement>) => {
-            event.preventDefault();
             handleChange(child);
         };
     };
@@ -161,13 +198,21 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
                     role="combobox"
                     tabIndex={tabIndex}
                 >
-                    <span>{children.find((child) => child.props.value === value)?.props.children ?? null}</span>
+                    {Array.isArray(value) && value.length ? (
+                        <>
+                            <span>{children.find(matchesValue(value[0]))?.props.children}</span>
+                            {value.length > 1 ? <span>+{value.length - 1}</span> : null}
+                        </>
+                    ) : (
+                        <span>{children.find(matchesValue(value))?.props.children}</span>
+                    )}
                     <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} />
                 </div>
             </PopoverPrimitive.Trigger>
             <PopoverPrimitive.Content asChild align="start" onOpenAutoFocus={(event) => event.preventDefault()} sideOffset={3}>
                 {children.length ? (
                     <CollectionPrimitive.Collection
+                        aria-multiselectable={multiple ? true : undefined}
                         active={active}
                         onChangeActive={setActive}
                         onKeyDown={handleCollectionKeyDown}
@@ -178,7 +223,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
                     >
                         {children.map((child) =>
                             React.cloneElement(child, {
-                                'aria-selected': child.props.value === value ? true : undefined,
+                                'aria-selected': matchesValue(value)(child) ? true : undefined,
                                 id: getOptionId(id, child),
                                 onClick: createClickHandler(child),
                             })
@@ -194,3 +239,11 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
 Select.Option = Option;
 
 export { Select, SelectProps, SelectOptionProps, SelectValue };
+
+const matchesValue = (value: undefined | SelectValue | SelectValue[]) => (child: React.ReactElement<SelectOptionProps>) => {
+    if (Array.isArray(value)) {
+        return value.includes(child.props.value);
+    }
+
+    return child.props.value === value;
+};

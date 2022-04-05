@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from 'react';
+import React from 'react';
 import { useMergedRef } from '../../hooks/useMergedRef';
 
 const isAriaSelectionKey = (event: React.KeyboardEvent) => {
