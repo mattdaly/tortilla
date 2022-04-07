@@ -66,7 +66,7 @@ export const Uncontrolled = (args: any) => {
     };
 
     return (
-        <form className="flex gap-3" onSubmit={handleSubmit}>
+        <form className="flex gap-3" onSubmit={handleSubmit} onReset={() => console.log('reset')}>
             <Select {...args} className="w-32" defaultValue="je" name="country">
                 {options.map((item) => (
                     <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
@@ -77,6 +77,7 @@ export const Uncontrolled = (args: any) => {
             <Button type="submit" appearance="primary">
                 Submit
             </Button>
+            <Button type="reset">Reset</Button>
         </form>
     );
 };

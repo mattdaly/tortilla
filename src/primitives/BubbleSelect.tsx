@@ -23,10 +23,11 @@ export const BubbleSelect = (props: React.SelectHTMLAttributes<HTMLSelectElement
                         option.selected = true;
                     }
                 });
+            } else {
+                setValue.call(select, value);
             }
 
             const event = new Event('change', { bubbles: true });
-            //setValue.call(select, value);
             select.dispatchEvent(event);
         }
     }, [prevValue, value]);

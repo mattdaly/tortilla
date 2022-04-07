@@ -77,6 +77,7 @@ export const Uncontrolled = (args: any) => {
             <Button type="submit" appearance="primary">
                 Submit
             </Button>
+            <Button type="reset">Reset</Button>
         </form>
     );
 };

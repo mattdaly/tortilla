@@ -62,7 +62,10 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
     let dimensions = useBoundingClientRectListener(inputRef);
 
     // uncontrolled support
-    let isFormControl = useIsFormControl(inputRef);
+    let isFormControl = useIsFormControl(inputRef, () => {
+        setValue(undefined);
+        // ends up in the combobox opening because of line 96
+    });
 
     let data = React.useMemo(() => {
         let _data = children;
@@ -89,8 +92,8 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
         let items = children.filter(filterByQuery(q));
 
         if (items.length) {
-            setOpen(true);
             setActive(0);
+            setOpen(true);
 
             // if the typed query matches a value, set that as the value
             // unsure if we want this, or at least maybe it should be case sensitive
@@ -185,7 +188,7 @@ const Combobox = React.forwardRef<HTMLInputElement, ComboboxProps>(function Comb
                     {...props}
                     aria-activedescendant={open && active ? getOptionId(id, data[active]) : undefined}
                     aria-haspopup={undefined}
-                    aria-autocomplete="list"
+                    aria-autocomplete="none"
                     disabled={disabled}
                     id={id}
                     icon={open ? 'ChevronUpIcon' : 'ChevronDownIcon'}

@@ -100,7 +100,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     let dimensions = useBoundingClientRectListener(buttonRef);
 
     // uncontrolled support
-    let isFormControl = useIsFormControl(buttonRef);
+    let isFormControl = useIsFormControl(buttonRef, () => setValue(undefined));
 
     let handleChange = (child: React.ReactElement<SelectOptionProps>) => {
         if (multiple) {
