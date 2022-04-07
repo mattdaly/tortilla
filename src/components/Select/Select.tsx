@@ -9,6 +9,7 @@ import { BubbleInput } from '../../primitives/BubbleInput';
 import { useBoundingClientRectListener } from '../../hooks/useBoundingClientRectListener';
 import './Select.css';
 import { Icon } from '../Icon/Icon';
+import { BubbleSelect } from '../../primitives/BubbleSelect';
 
 const filterByQuery =
     (query: string, strategy: 'startsWith' | 'matches' = 'startsWith') =>
@@ -185,9 +186,25 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         };
     };
 
+    let getValue = () => {
+        if (value !== undefined) {
+            if (multiple) {
+                return Array.isArray(value) ? value.map(String) : [String(value)];
+            } else {
+                return String(value);
+            }
+        }
+    };
+
     return (
         <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-            {isFormControl && <BubbleInput name={name} value={String(value)} />}
+            {isFormControl && (
+                <BubbleSelect aria-hidden multiple={multiple} name={name} value={getValue()}>
+                    {children.map((child) => (
+                        <option key={String(child.props.value)} value={String(child.props.value)} />
+                    ))}
+                </BubbleSelect>
+            )}
             <PopoverPrimitive.Trigger asChild type={undefined}>
                 <div
                     {...props}

@@ -67,7 +67,7 @@ export const Uncontrolled = (args: any) => {
 
     return (
         <form className="flex gap-3" onSubmit={handleSubmit}>
-            <Select {...args} className="w-32" defaultValue="je" name="country" onBlur={() => console.log('tits')}>
+            <Select {...args} className="w-32" defaultValue="je" name="country">
                 {options.map((item) => (
                     <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
                         {item.text}
@@ -99,18 +99,23 @@ export const Controlled = (args: any) => {
 };
 
 export const Multiple = (args: any) => {
-    const [country, setCountry] = React.useState<SelectValue>('je');
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        alert('Submitted with value: ' + new FormData(event.currentTarget).getAll('country'));
+    };
 
     return (
-        <>
-            <p>Country: {country ? `${country} (${options.find((i) => i.value === country)?.text})` : ''}</p>
-            <Select {...args} className="w-32" multiple onChange={setCountry} value={country}>
+        <form className="flex gap-3" onSubmit={handleSubmit}>
+            <Select {...args} className="w-32" defaultValue="je" multiple name="country">
                 {options.map((item) => (
                     <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
                         {item.text}
                     </Select.Option>
                 ))}
             </Select>
-        </>
+            <Button type="submit" appearance="primary">
+                Submit
+            </Button>
+        </form>
     );
 };
