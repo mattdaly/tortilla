@@ -106,7 +106,29 @@ export const Multiple = (args: any) => {
 
     return (
         <form className="flex gap-3" onSubmit={handleSubmit}>
-            <Select {...args} className="w-32" defaultValue="je" multiple name="country">
+            <Select {...args} className="w-48" defaultValue={['je']} multiple name="country">
+                {options.map((item) => (
+                    <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
+                        {item.text}
+                    </Select.Option>
+                ))}
+            </Select>
+            <Button type="submit" appearance="primary">
+                Submit
+            </Button>
+        </form>
+    );
+};
+
+export const Tags = (args: any) => {
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        alert('Submitted with value: ' + new FormData(event.currentTarget).getAll('country'));
+    };
+
+    return (
+        <form className="flex gap-3" onSubmit={handleSubmit}>
+            <Select {...args} className="w-48" defaultValue={['je']} multiple name="country" tags>
                 {options.map((item) => (
                     <Select.Option key={item.value} disabled={item.disabled} value={item.value}>
                         {item.text}

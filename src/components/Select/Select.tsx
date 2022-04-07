@@ -60,6 +60,7 @@ type SelectProps = Omit<React.HTMLAttributes<HTMLDivElement>, 'children' | 'defa
     name?: string;
     onChange?: (value: SelectValue | SelectValue[]) => void;
     readOnly?: boolean;
+    tags?: boolean;
     value?: SelectValue | SelectValue[];
 };
 
@@ -74,6 +75,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         onChange,
         readOnly,
         tabIndex = disabled ? -1 : 0,
+        tags,
         value: prop,
         ...props
     } = externalProps;
@@ -89,7 +91,9 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     });
     // active option in the collection
     let [active, setActive] = React.useState<number>(
-        value !== undefined ? children.findIndex((child) => child.props.value === value) ?? 0 : 0
+        value !== undefined
+            ? children.findIndex((child) => child.props.value === (Array.isArray(value) ? value[0] ?? 0 : value)) ?? 0
+            : 0
     );
     let [open, setOpen] = React.useState(false);
     // align the listbox min width with the width of the input - it should never be smaller
@@ -196,6 +200,12 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         }
     };
 
+    let removeValue = (v: SelectValue) => {
+        if (Array.isArray(value)) {
+            setValue(value.filter((z) => z !== v));
+        }
+    };
+
     return (
         <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
             {isFormControl && (
@@ -219,12 +229,23 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
                     tabIndex={tabIndex}
                 >
                     {Array.isArray(value) && value.length ? (
-                        <>
-                            <span>{children.find(matchesValue(value[0]))?.props.children}</span>
-                            {value.length > 1 ? <span>+{value.length - 1}</span> : null}
-                        </>
+                        tags ? (
+                            <div className="flex gap-1 py-1 flex-wrap -ml-1">
+                                {value.map((v) => (
+                                    <span key={v}>
+                                        {children.find((c) => c.props.value === v)?.props.children}{' '}
+                                        <Icon name="XIcon" onClick={() => removeValue(v)} />
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <>
+                                <div className="truncate flex-grow">{children.find(matchesValue(value[0]))?.props.children}</div>
+                                {value.length > 1 ? <span>+{value.length - 1}</span> : null}
+                            </>
+                        )
                     ) : (
-                        <span>{children.find(matchesValue(value))?.props.children}</span>
+                        <div>{children.find(matchesValue(value))?.props.children}</div>
                     )}
                     <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} />
                 </div>
