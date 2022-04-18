@@ -44,7 +44,7 @@
     max-height: calc((2 * theme('borderWidth.2')) + theme('spacing.36'));
 }
 
-[role='listbox']:focus {
+[role='listbox']:focus:not([aria-multiselectable="true"]) {
     @apply border-blue-400 outline-none;
 }
 

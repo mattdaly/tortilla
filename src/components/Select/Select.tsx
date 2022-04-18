@@ -172,7 +172,9 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
         }
 
         if (CollectionPrimitive.isAriaSelectionKey(event)) {
-            if (event.key !== 'Tab') {
+            if (event.key === 'Tab' && multiple) {
+                return;
+            } else if (event.key !== 'Tab') {
                 event.preventDefault();
             }
 
@@ -187,18 +189,21 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
 
         return (event: React.MouseEvent<HTMLDivElement>) => {
             handleChange(child);
+            buttonRef.current?.focus();
         };
     };
 
-    let getValue = () => {
+    let bubbleValue;
+
+    if (isFormControl) {
         if (value !== undefined) {
             if (multiple) {
-                return Array.isArray(value) ? value.map(String) : [String(value)];
+                bubbleValue = Array.isArray(value) ? value.map(String) : [String(value)];
             } else {
-                return String(value);
+                bubbleValue = String(value);
             }
         }
-    };
+    }
 
     let removeValue = (v: SelectValue) => {
         if (Array.isArray(value)) {
@@ -209,7 +214,7 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
     return (
         <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
             {isFormControl && (
-                <BubbleSelect aria-hidden multiple={multiple} name={name} value={getValue()}>
+                <BubbleSelect aria-hidden key={String(bubbleValue)} multiple={multiple} name={name} value={bubbleValue}>
                     {children.map((child) => (
                         <option key={String(child.props.value)} value={String(child.props.value)} />
                     ))}
@@ -250,7 +255,13 @@ const Select = React.forwardRef<HTMLInputElement, SelectProps>(function Select(e
                     <Icon name={open ? 'ChevronUpIcon' : 'ChevronDownIcon'} />
                 </div>
             </PopoverPrimitive.Trigger>
-            <PopoverPrimitive.Content asChild align="start" onOpenAutoFocus={(event) => event.preventDefault()} sideOffset={3}>
+            <PopoverPrimitive.Content
+                asChild
+                align="start"
+                onOpenAutoFocus={(event) => event.preventDefault()}
+                sideOffset={3}
+                tabIndex={-1}
+            >
                 {children.length ? (
                     <CollectionPrimitive.Collection
                         aria-multiselectable={multiple ? true : undefined}
