@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { usePrevious } from '../hooks/usePrevious';
+import { usePreviousValue } from '../hooks/usePrevious';
 
 // taken from radix - https://github.com/radix-ui/primitives/blob/main/packages/react/slider/src/Slider.tsx#L568-L596
 export const BubbleInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => {
     const { value, ...inputProps } = props;
     const ref = React.useRef<HTMLInputElement>(null);
-    const prevValue = usePrevious(value);
+    const prevValue = usePreviousValue(value);
 
     // Bubble value change to parents (e.g form change event)
     React.useEffect(() => {

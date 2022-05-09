@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { usePrevious } from '../hooks/usePrevious';
+import { usePreviousValue } from '../hooks/usePrevious';
 
 // taken from radix - https://github.com/radix-ui/primitives/blob/main/packages/react/select/src/Select.tsx#L1183-L1224
 export const BubbleSelect = (props: React.SelectHTMLAttributes<HTMLSelectElement>) => {
     const { value, ...selectProps } = props;
     const ref = React.useRef<HTMLSelectElement>(null);
-    const prevValue = usePrevious(value);
+    const prevValue = usePreviousValue(value);
 
     // Bubble value change to parents (e.g form change event)
     React.useEffect(() => {

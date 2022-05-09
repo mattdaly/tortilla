@@ -27,7 +27,7 @@ const Table = React.forwardRef<HTMLDivElement, TableProps>(function Table(extern
     let columns = React.Children.toArray(children).map((child) => child.props);
 
     return (
-        <div className="overflow-auto relative" style={{ height: '400px', width: '1200px' }}>
+        <div className="overflow-auto relative h-full w-full">
             <div
                 {...props}
                 className="grid"
